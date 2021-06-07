@@ -21,6 +21,18 @@ function verifyIfExistsAccountCPF(request, response, next) {
   next()
 }
 
+async function getBalance(statement) {
+  const balance = statement.reduce((acc, operation) => {
+    if (operation.type === 'credit') {
+      return acc + operation.amount
+    } else {
+      return acc - operation.amount
+    }
+  }, 0)
+
+  return balance;
+}
+
 app.post('/account', (request, response) => {
   const { cpf, name } = request.body;
 
@@ -62,6 +74,28 @@ app.post('/deposit', verifyIfExistsAccountCPF, (request, response) => {
   customer.statement.push(statementOperation);
 
   return response.status(201).json({ message: 'Depósito realizado com sucesso!' });
+})
+
+app.post('/withdraw', verifyIfExistsAccountCPF, async (request, response) => {
+  const { amount } = request.body
+  const { customer } = request
+
+  const balance = await getBalance(customer.statement);
+
+  if (amount > balance) {
+    return response.status(400).json({ error: 'O valor do saque é maior que o saldo da conta.' })
+  }
+
+  const statementOperation = {
+    description: 'Withdraw',
+    amount,
+    created_at: new Date(),
+    type: 'debit'
+  }
+
+  customer.statement.push(statementOperation);
+
+  return response.status(201).json({ message: 'Saque realizado com sucesso!' });
 })
 
 app.listen(3333);
