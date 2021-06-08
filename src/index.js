@@ -31,6 +31,7 @@ async function getBalance(statement) {
   }, 0)
 
   return balance;
+
 }
 
 app.post('/account', (request, response) => {
@@ -134,10 +135,10 @@ app.delete('/account', verifyIfExistsAccountCPF ,(request, response) => {
   return response.status(200).json(customers)
 })
 
-app.get('/balance', verifyIfExistsAccountCPF, (request, response) => {
+app.get('/balance', verifyIfExistsAccountCPF, async (request, response) => {
   const { customer } = request
 
-  const balance = getBalance(customer.statement);
+  const balance = await getBalance(customer.statement);
 
   return response.json(balance)
 })
